@@ -53,14 +53,15 @@ class BundleFu
           end
         }
       end
-      
-      
-      path = { :css => options[:css_path], :js => options[:js_path] }
+            
+      paths = { :css => options[:css_path], :js => options[:js_path] }
 #      abs_path = {}
 #      filelist = {}
-      [:css, :js].each{|filetype|
-        abs_path = File.join(RAILS_ROOT, "public", path[filetype], "#{options[:name]}.#{filetype}")
+      [:css, :js].each { |filetype|
+        path = File.join(paths[filetype], "#{options[:name]}.#{filetype}")
+        abs_path = File.join(RAILS_ROOT, "public", path)
         abs_filelist_path = abs_path + ".filelist"
+        
         filelist = FileList.open( abs_filelist_path )
         
         # check against newly parsed filelist.  If we didn't parse the filelist from the output, then check against the updated ctimes.
@@ -68,21 +69,20 @@ class BundleFu
         
         unless new_filelist == filelist
           # regenerate everything
-          content = BundleFu.bundle_files(new_filelist.filenames) 
-          File.open( abs_path, "w") {|f| f.puts content } if content
+          if new_filelist.filenames.empty?
+            # delete the javascript/css bundle file if it's empty, but keep the filelist cache
+            FileUtils.rm_f(abs_path)
+          else
+            content = BundleFu.bundle_files(new_filelist.filenames) 
+            File.open( abs_path, "w") {|f| f.puts content } if content
+          end
           new_filelist.save_as(abs_filelist_path)
         end
-          
+        
+        if File.exists?(abs_path)
+          concat( filetype==:css ? stylesheet_link_tag(path) : javascript_include_tag(path), block.binding)
+        end
       }
-      
-      
-#      abs_css_path = 
-#      abs_js_path = File.join(RAILS_ROOT, "public", options[:js_path], "#{options[:name]}.js")
-      
-#      filelist = Marshal.load(File.read())
-
-      
-      # if the files have changed, rebundle
       
     end
   end

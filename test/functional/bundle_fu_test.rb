@@ -15,9 +15,8 @@ class BundleFuTest < Test::Unit::TestCase
   # the same content, slightly changed
   @@content_include_all = @@content_include_some + <<-EOF
   <script src="/javascripts/js_3.js?1000" type="text/javascript"></script>
-    <link href="/stylesheets/css_3.css?1000" media="screen" rel="Stylesheet" type="text/css" />
+  <link href="/stylesheets/css_3.css?1000" media="screen" rel="Stylesheet" type="text/css" />
   EOF
-
   
   def setup
     @mock_view = MockView.new
@@ -93,9 +92,25 @@ class BundleFuTest < Test::Unit::TestCase
     assert_public_files_match(cache_files("bundle"), "BOGUS")
   end
   
+  def test__bundle__js_only__should_output_js_include_statement
+    @mock_view.bundle { @@content_include_some.split("\n").first }
+    lines = @mock_view.output.split("\n")
+    assert_equal(1, lines.length)
+    assert_match(/javascripts/, lines.first)
+  end
+  
+  def test__bundle__css_only__should_output_css_include_statement
+    @mock_view.bundle { @@content_include_some.split("\n")[2] }
+    lines = @mock_view.output.split("\n")
+    
+    assert_equal(1, lines.length)
+    assert_match(/stylesheets/, lines.first)
+    
+  end
+  
 private
   def public_file(filename)
-    File.join(MockView::RAILS_ROOT, "public", filename)
+    File.join(::RAILS_ROOT, "public", filename)
   end
   
   def purge_cache
