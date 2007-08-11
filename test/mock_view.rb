@@ -18,10 +18,10 @@ class MockView
   end
   
   def stylesheet_link_tag(*args)
-    args.collect{|arg| "<link href=\"#{arg}?#{File.ctime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" media=\"screen\" rel=\"Stylesheet\" type=\"text/css\" />" } * "\n"
+    args.collect{|arg| "<link href=\"#{arg}?#{File.mtime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" media=\"screen\" rel=\"Stylesheet\" type=\"text/css\" />" } * "\n"
   end
   
   def javascript_include_tag(*args)
-    args.collect{|arg| "<script src=\"#{arg}?#{File.ctime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" type=\"text/javascript\"></script>" } * "\n"
+    args.collect{|arg| "<script src=\"#{arg}?#{File.mtime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" type=\"text/javascript\"></script>" } * "\n"
   end
 end

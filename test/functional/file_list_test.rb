@@ -9,11 +9,11 @@ class FileListTest < Test::Unit::TestCase
     
   end
   
-  def test__new_files__should_get_ctimes
+  def test__new_files__should_get_mtimes
     filename = "/javascripts/js_1.js"
     filelist = BundleFu::FileList.new([filename])
     
-    assert_equal(File.ctime(File.join(RAILS_ROOT, "public", filename)).to_i,filelist.filelist[0][1])
+    assert_equal(File.mtime(File.join(RAILS_ROOT, "public", filename)).to_i,filelist.filelist[0][1])
   end
   
   def test__serialization
@@ -28,12 +28,12 @@ class FileListTest < Test::Unit::TestCase
     FileUtils.rm_f(filelist_filename)
   end
   
-  def test__equality__same_file_and_ctime__should_equate
+  def test__equality__same_file_and_mtime__should_equate
     filename = "/javascripts/js_1.js"
     assert BundleFu::FileList.new(filename) == BundleFu::FileList.new(filename)
   end
   
-  def test__equality__dif_file_and_ctime__shouldnt_equate
+  def test__equality__dif_file_and_mtime__shouldnt_equate
     filename1 = "/javascripts/js_1.js"
     filename2 = "/javascripts/js_2.js"
     assert BundleFu::FileList.new(filename1) != BundleFu::FileList.new(filename2)

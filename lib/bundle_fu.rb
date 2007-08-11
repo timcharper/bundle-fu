@@ -30,7 +30,8 @@ class BundleFu
       options = {
         :css_path => "/stylesheets",
         :js_path => "/javascripts",
-        :name => "bundle"
+        :name => "bundle",
+        :bypass => false
       }.merge(options)
       
       paths = { :css => options[:css_path], :js => options[:js_path] }
@@ -65,8 +66,8 @@ class BundleFu
         
         filelist = FileList.open( abs_filelist_path )
         
-        # check against newly parsed filelist.  If we didn't parse the filelist from the output, then check against the updated ctimes.
-        new_filelist = new_files ? BundleFu::FileList.new(new_files[filetype]) : filelist.clone.update_ctimes
+        # check against newly parsed filelist.  If we didn't parse the filelist from the output, then check against the updated mtimes.
+        new_filelist = new_files ? BundleFu::FileList.new(new_files[filetype]) : filelist.clone.update_mtimes
         
         unless new_filelist == filelist
           # regenerate everything
@@ -74,17 +75,20 @@ class BundleFu
             # delete the javascript/css bundle file if it's empty, but keep the filelist cache
             FileUtils.rm_f(abs_path)
           else
-            content = BundleFu.bundle_files(new_filelist.filenames) 
-            File.open( abs_path, "w") {|f| f.puts content } if content
+            output = BundleFu.bundle_files(new_filelist.filenames) 
+            File.open( abs_path, "w") {|f| f.puts output } if output
           end
           new_filelist.save_as(abs_filelist_path)
         end
         
-        if File.exists?(abs_path)
+        if File.exists?(abs_path) && !options[:bypass]
           concat( filetype==:css ? stylesheet_link_tag(path) : javascript_include_tag(path), block.binding)
         end
       }
       
+      if options[:bypass]
+        concat( content, block.binding )
+      end
     end
   end
 end

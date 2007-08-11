@@ -17,10 +17,10 @@ class BundleFu::FileList
     self.filelist.collect{ |entry| entry[0] }
   end
   
-  def update_ctimes
+  def update_mtimes
     old_filenames = self.filenames
     self.filelist = []
-    # readding the files will effectively update the ctimes
+    # readding the files will effectively update the mtimes
     self.add_files(old_filenames)
     self
   end
@@ -42,7 +42,7 @@ class BundleFu::FileList
   
   def add_files(filenames=[])
     filenames.each{|filename|
-      self.filelist << [ filename, (File.ctime(abs_location(filename)).to_i rescue 0) ]
+      self.filelist << [ filename, (File.mtime(abs_location(filename)).to_i rescue 0) ]
     }
   end
   
