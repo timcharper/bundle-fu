@@ -28,10 +28,10 @@ class BundleFu
     # returns true if a regen occured.  False if not.
     def bundle(options={}, &block)
       options = {
-        :css_path => "/stylesheets",
-        :js_path => "/javascripts",
-        :name => "bundle",
-        :bypass => false
+        :css_path => ($bundle_css_path || "/stylesheets"),
+        :js_path => ($bundle_js_path || "/javascripts"),
+        :name => ($bundle_default_name || "bundle"),
+        :bypass => ($bundle_bypass || false)
       }.merge(options)
       
       paths = { :css => options[:css_path], :js => options[:js_path] }
