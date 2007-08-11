@@ -33,13 +33,13 @@ class BundleFuTest < Test::Unit::TestCase
     # check to see each bundle file exists and append some text to the bottom of each file
     append_to_public_files(cache_files("bundle"), "BOGUS")
     
-    assert_public_files_match("/javascripts/bundle.js", "BOGUS")
-    assert_public_files_match("/stylesheets/bundle.css", "BOGUS")
+    assert_public_files_match("/javascripts/cache/bundle.js", "BOGUS")
+    assert_public_files_match("/stylesheets/cache/bundle.css", "BOGUS")
     
     @mock_view.bundle { @@content_include_some }
     
-    assert_public_files_match("/javascripts/bundle.js", "BOGUS")
-    assert_public_files_match("/stylesheets/bundle.css", "BOGUS")
+    assert_public_files_match("/javascripts/cache/bundle.js", "BOGUS")
+    assert_public_files_match("/stylesheets/cache/bundle.css", "BOGUS")
   end
   
   def test__content_changes__should_refresh_cache
@@ -73,7 +73,7 @@ class BundleFuTest < Test::Unit::TestCase
   def test__content_remains_same_but_cache_files_dont_match_whats_in_content__shouldnt_refresh_cache
     # it shouldnt parse the content unless if it differed from the last request.  This scenario should never exist, and if it did it would be fixed when the server reboots.
     @mock_view.bundle { @@content_include_some }
-    abs_filelist_path = public_file("/stylesheets/bundle.css.filelist")
+    abs_filelist_path = public_file("/stylesheets/cache/bundle.css.filelist")
     b = BundleFu::FileList.open(abs_filelist_path)
     
     @mock_view.bundle { @@content_include_all }
@@ -113,7 +113,7 @@ class BundleFuTest < Test::Unit::TestCase
     
     assert_public_files_match(cache_files("bundle").grep(/javascripts/), "FILE READ ERROR")
     
-    filelist = BundleFu::FileList.open(public_file("/javascripts/bundle.js.filelist"))
+    filelist = BundleFu::FileList.open(public_file("/javascripts/cache/bundle.js.filelist"))
     assert_equal(0, filelist.filelist[0][1], "mtime for first file should be 0")
   end
   
@@ -129,8 +129,8 @@ class BundleFuTest < Test::Unit::TestCase
   
   def test__bypass__should_generate_files_but_render_normal_output
     @mock_view.bundle(:bypass => true) { @@content_include_some }
-    assert_public_file_exists("/stylesheets/bundle.css")
-    assert_public_file_exists("/stylesheets/bundle.css.filelist")
+    assert_public_file_exists("/stylesheets/cache/bundle.css")
+    assert_public_file_exists("/stylesheets/cache/bundle.css.filelist")
     
     assert_equal(@@content_include_some, @mock_view.output)
   end
@@ -141,7 +141,7 @@ private
   
   def purge_cache
     # remove all fixtures named "bundle*"
-    Dir[ public_file("**/bundle*") ].each{|filename| FileUtils.rm_f filename }
+    Dir[ public_file("**/cache") ].each{|filename| FileUtils.rm_rf filename }
   end
   
   def assert_public_file_exists(filename, message=nil)
@@ -167,7 +167,7 @@ private
   end
   
   def cache_files(name)
-    ["/javascripts/#{name}.js", "/stylesheets/#{name}.css"]
+    ["/javascripts/cache/#{name}.js", "/stylesheets/cache/#{name}.css"]
   end
 
   def append_to_public_files(filenames, content)

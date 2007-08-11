@@ -28,8 +28,8 @@ class BundleFu
     # returns true if a regen occured.  False if not.
     def bundle(options={}, &block)
       options = {
-        :css_path => ($bundle_css_path || "/stylesheets"),
-        :js_path => ($bundle_js_path || "/javascripts"),
+        :css_path => ($bundle_css_path || "/stylesheets/cache"),
+        :js_path => ($bundle_js_path || "/javascripts/cache"),
         :name => ($bundle_default_name || "bundle"),
         :bypass => ($bundle_bypass || false)
       }.merge(options)
@@ -56,9 +56,7 @@ class BundleFu
           end
         }
       end
-            
-#      abs_path = {}
-#      filelist = {}
+         
       [:css, :js].each { |filetype|
         path = File.join(paths[filetype], "#{options[:name]}.#{filetype}")
         abs_path = File.join(RAILS_ROOT, "public", path)
@@ -70,6 +68,7 @@ class BundleFu
         new_filelist = new_files ? BundleFu::FileList.new(new_files[filetype]) : filelist.clone.update_mtimes
         
         unless new_filelist == filelist
+          FileUtils.mkdir_p(File.join(RAILS_ROOT, "public", paths[filetype]))
           # regenerate everything
           if new_filelist.filenames.empty?
             # delete the javascript/css bundle file if it's empty, but keep the filelist cache
