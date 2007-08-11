@@ -26,13 +26,15 @@ class BundleFu::FileList
   end
   
   def self.open(filename)
+    return nil unless File.exists?(filename)
     b = new
-    b.filelist = Marshal.load(File.read(filename)) if File.exists?(filename)
+    b.filelist = Marshal.load(File.read(filename)) 
     b
   end
   
   # compares to see if one file list is exactly the same as another
   def ==(compare)
+    return false if compare.nil?
     throw "cant compare with #{compare.class}" unless self.class===compare
     
     self.filelist == compare.filelist
@@ -40,7 +42,7 @@ class BundleFu::FileList
   
   def add_files(filenames=[])
     filenames.each{|filename|
-      self.filelist << [ filename, File.ctime(abs_location(filename)).to_i ]
+      self.filelist << [ filename, (File.ctime(abs_location(filename)).to_i rescue 0) ]
     }
   end
   

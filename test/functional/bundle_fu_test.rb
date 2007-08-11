@@ -108,6 +108,24 @@ class BundleFuTest < Test::Unit::TestCase
     
   end
   
+  def test__nonexisting_file__should_use_blank_file_created_at_0_ctime
+    @mock_view.bundle { %q{<script src="/javascripts/non_existing_file.js?1000" type="text/javascript"></script>} } 
+    
+    assert_public_files_match(cache_files("bundle").grep(/javascripts/), "FILE READ ERROR")
+    
+    filelist = BundleFu::FileList.open(public_file("/javascripts/bundle.js.filelist"))
+    assert_equal(0, filelist.filelist[0][1], "ctime for first file should be 0")
+  end
+  
+  def test__missing_cache_filelist__should_regenerate
+    @mock_view.bundle { @@content_include_some }
+    append_to_public_files(cache_files("bundle"), "BOGUS")
+    
+    # now delete the cache files
+    Dir[ public_file("**/*.filelist")].each{|filename| FileUtils.rm_f filename }
+    @mock_view.bundle { @@content_include_some }
+    assert_public_files_no_match(cache_files("bundle"), "BOGUS", "Should have regenerated the file, but it didn't")
+  end
 private
   def public_file(filename)
     File.join(::RAILS_ROOT, "public", filename)

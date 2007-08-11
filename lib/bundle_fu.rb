@@ -11,15 +11,14 @@ class BundleFu
       
       output = ""
       filenames.each{|filename|
-        output << "/* -------------- #{filename} -------------"
+        output << "/* -------------- #{filename} ------------- */ "
         output << "\n"
-        output << File.read(File.join(RAILS_ROOT, "public", filename))
+        output << (File.read(File.join(RAILS_ROOT, "public", filename)) rescue "/* FILE READ ERROR! */")
         output << "\n"
       }
       output
     end
   end
-  
   
   self.init
   
@@ -34,13 +33,16 @@ class BundleFu
         :name => "bundle"
       }.merge(options)
       
+      paths = { :css => options[:css_path], :js => options[:js_path] }
+      
       content = capture(&block)
       content_changed = false
       
       new_files = nil
+      abs_filelist_paths = [:css, :js].inject({}) { | hash, filetype | hash[filetype] = File.join(RAILS_ROOT, "public", paths[filetype], "#{options[:name]}.#{filetype}.filelist"); hash }
       
-      # only rescan file list if content_changed
-      unless content == BundleFu.content_store[options[:name]]
+      # only rescan file list if content_changed, or if a filelist cache file is missing
+      unless content == BundleFu.content_store[options[:name]] && File.exists?(abs_filelist_paths[:css]) && File.exists?(abs_filelist_paths[:js])
         BundleFu.content_store[options[:name]] = content 
         new_files = {:js => [], :css => []}
         
@@ -54,13 +56,12 @@ class BundleFu
         }
       end
             
-      paths = { :css => options[:css_path], :js => options[:js_path] }
 #      abs_path = {}
 #      filelist = {}
       [:css, :js].each { |filetype|
         path = File.join(paths[filetype], "#{options[:name]}.#{filetype}")
         abs_path = File.join(RAILS_ROOT, "public", path)
-        abs_filelist_path = abs_path + ".filelist"
+        abs_filelist_path = abs_filelist_paths[filetype]
         
         filelist = FileList.open( abs_filelist_path )
         
