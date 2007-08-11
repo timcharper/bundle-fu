@@ -28,7 +28,9 @@ class BundleFu::FileList
   def self.open(filename)
     return nil unless File.exists?(filename)
     b = new
-    b.filelist = Marshal.load(File.read(filename)) 
+    File.open(filename, "rb") {|f|
+      b.filelist = Marshal.load(f)  # rescue [])
+    }
     b
   end
   
@@ -47,7 +49,7 @@ class BundleFu::FileList
   end
   
   def save_as(filename)
-    File.open(filename, "w") {|f| f.puts Marshal.dump(self.filelist)}
+    File.open(filename, "wb") {|f| f.puts Marshal.dump(self.filelist)}
   end
 protected
   def abs_location(filename)
