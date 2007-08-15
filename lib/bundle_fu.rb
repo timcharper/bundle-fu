@@ -27,11 +27,14 @@ class BundleFu
     #   :name - The name of the css and js files you wish to output
     # returns true if a regen occured.  False if not.
     def bundle(options={}, &block)
+      # allow bypassing via the querystring
+      session[:bundle_fu] = (params[:bundle_fu]=="true") if params.has_key?(:bundle_fu)
+      
       options = {
         :css_path => ($bundle_css_path || "/stylesheets/cache"),
         :js_path => ($bundle_js_path || "/javascripts/cache"),
         :name => ($bundle_default_name || "bundle"),
-        :bypass => ($bundle_bypass || false)
+        :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? false : true) : session[:bundle_fu] )
       }.merge(options)
       
       paths = { :css => options[:css_path], :js => options[:js_path] }
@@ -80,12 +83,12 @@ class BundleFu
           new_filelist.save_as(abs_filelist_path)
         end
         
-        if File.exists?(abs_path) && !options[:bypass]
+        if File.exists?(abs_path) && options[:bundle_fu]
           concat( filetype==:css ? stylesheet_link_tag(path) : javascript_include_tag(path), block.binding)
         end
       }
       
-      if options[:bypass]
+      unless options[:bundle_fu]
         concat( content, block.binding )
       end
     end

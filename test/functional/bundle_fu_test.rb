@@ -50,7 +50,6 @@ class BundleFuTest < Test::Unit::TestCase
     assert_public_files_match(cache_files("bundle"), "BOGUS")
     
     # now, pass in some new content.  Make sure that the css/js files are regenerated
-#    dbg
     @mock_view.bundle { @@content_include_all }
     assert_public_files_no_match(cache_files("bundle"), "BOGUS")
     assert_public_files_no_match(cache_files("bundle"), "BOGUS")
@@ -61,7 +60,6 @@ class BundleFuTest < Test::Unit::TestCase
     # we're gonna hack each of them and set all the modified times to 0
     cache_files("bundle").each{|filename|
       abs_filelist_path = public_file(filename + ".filelist")
-#      dbg  
       b = BundleFu::FileList.open(abs_filelist_path)
       b.filelist.each{|entry| entry[1] = entry[1] - 100 }
       b.save_as(abs_filelist_path)
@@ -134,6 +132,17 @@ class BundleFuTest < Test::Unit::TestCase
     
     assert_equal(@@content_include_some, @mock_view.output)
   end
+  
+  def test__bypass_param_set__should_honor_and_store_in_session
+    @mock_view.params[:bundle_bypass] = "true"
+    @mock_view.bundle { @@content_include_some }
+    assert_equal(@@content_include_some, @mock_view.output)
+    
+    @mock_view.params.delete(:bundle_bypass)
+    @mock_view.bundle { @@content_include_some }
+    assert_equal(@@content_include_some*2, @mock_view.output)
+  end
+  
 private
   def public_file(filename)
     File.join(::RAILS_ROOT, "public", filename)

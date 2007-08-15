@@ -4,9 +4,12 @@ class MockView
   ::RAILS_ROOT = File.join(File.dirname(__FILE__), 'fixtures')
   
   attr_accessor :output
-  
+  attr_accessor :session
+  attr_accessor :params
   def initialize
     @output = ""
+    @session = {}
+    @params = {}
   end
   
   def capture(&block)
@@ -24,4 +27,5 @@ class MockView
   def javascript_include_tag(*args)
     args.collect{|arg| "<script src=\"#{arg}?#{File.mtime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" type=\"text/javascript\"></script>" } * "\n"
   end
+  
 end
