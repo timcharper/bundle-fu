@@ -32,6 +32,8 @@ class BundleFu::FileList
       b.filelist = Marshal.load(f)  # rescue [])
     }
     b
+  rescue
+    nil
   end
   
   # compares to see if one file list is exactly the same as another
