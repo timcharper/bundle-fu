@@ -6,15 +6,58 @@ class BundleFu
       @content_store = {}
     end
     
-    def bundle_files(filenames=[])
-      return nil if filenames.empty?
-      
+    def each_read_file(filenames=[])
+      filenames.each{ |filename|
+        output  = "/* -------------- #{filename} ------------- */ "
+        output << "\n"
+        output << (File.read(File.join(RAILS_ROOT, "public", filename)) rescue ( return "/* FILE READ ERROR! */"))
+        output << "\n"
+        yield filename, output
+      }
+    end
+    
+    def bundle_js_files(filenames=[], output_filename = "", options={})
       output = ""
-      filenames.each{|filename|
-        output << "/* -------------- #{filename} ------------- */ "
-        output << "\n"
-        output << (File.read(File.join(RAILS_ROOT, "public", filename)) rescue "/* FILE READ ERROR! */")
-        output << "\n"
+      each_read_file(filenames) { |filename, content|
+      }
+    end
+    
+    # rewrites a relative path to an absolute path, removing excess "../" and "./"
+    # rewrite_relative_path("stylesheets/default/global.css", "../image.gif") => "/stylesheets/image.gif"
+    def rewrite_relative_path(source_filename, relative_url)
+      return relative_url if relative_url.first == "/"
+      
+      elements = File.join("/", File.dirname(source_filename)).gsub(/\/+/, '/').split("/")
+      elements += relative_url.gsub(/\/+/, '/').split("/")
+      
+      index = 0
+      while(elements[index])
+        if (elements[index]==".") 
+          elements.delete_at(index) 
+        elsif (elements[index]=="..")
+          next if index==0
+          index-=1
+          2.times { elements.delete_at(index)}
+          
+        else
+          index+=1
+        end
+      end
+      
+      elements * "/"
+    end
+  
+    def bundle_css_files(filenames=[], options = {})
+      output = ""
+      each_read_file(filenames) { |filename, content|
+        # rewrite the URL reference paths
+        # url(../../../images/active_scaffold/default/add.gif);
+        # url(/stylesheets/active_scaffold/default/../../../images/active_scaffold/default/add.gif);
+        # url(/stylesheets/active_scaffold/../../images/active_scaffold/default/add.gif);
+        # url(/stylesheets/../images/active_scaffold/default/add.gif);
+        # url(/images/active_scaffold/default/add.gif);
+        content.gsub!(/url *\(([^\)]+)\)/) { "url(#{rewrite_relative_path(filename, $1)})" }
+        output << content
       }
       output
     end
@@ -34,7 +77,7 @@ class BundleFu
         :css_path => ($bundle_css_path || "/stylesheets/cache"),
         :js_path => ($bundle_js_path || "/javascripts/cache"),
         :name => ($bundle_default_name || "bundle"),
-        :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? false : true) : session[:bundle_fu] )
+        :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? true : $bundle_fu) : session[:bundle_fu] )
       }.merge(options)
       
       paths = { :css => options[:css_path], :js => options[:js_path] }
@@ -53,18 +96,18 @@ class BundleFu
         content.scan(/(href|src) *= *["']([^"^'^\?]+)/i).each{ |property, value|
           case property
           when "src"
-            new_files[:js] << value
+            js_files[:js] << value
           when "href"
-            new_files[:css] << value
+            css_files[:css] << value
           end
         }
       end
          
       [:css, :js].each { |filetype|
-        path = File.join(paths[filetype], "#{options[:name]}.#{filetype}")
-        abs_path = File.join(RAILS_ROOT, "public", path)
+        output_filename = File.join(paths[filetype], "#{options[:name]}.#{filetype}")
+        abs_path = File.join(RAILS_ROOT, "public", output_filename)
         abs_filelist_path = abs_filelist_paths[filetype]
-        
+       
         filelist = FileList.open( abs_filelist_path )
         
         # check against newly parsed filelist.  If we didn't parse the filelist from the output, then check against the updated mtimes.
@@ -77,14 +120,15 @@ class BundleFu
             # delete the javascript/css bundle file if it's empty, but keep the filelist cache
             FileUtils.rm_f(abs_path)
           else
-            output = BundleFu.bundle_files(new_filelist.filenames) 
-            File.open( abs_path, "w") {|f| f.puts output } if output
+            BundleFu.send("bundle_#{filelist}_files", new_filelist.filenames, output_filename)
+#            output = BundleFu.bundle_files(new_filelist.filenames, :type => filetype) 
+#            File.open( abs_path, "w") {|f| f.puts output } if output
           end
           new_filelist.save_as(abs_filelist_path)
         end
         
         if File.exists?(abs_path) && options[:bundle_fu]
-          concat( filetype==:css ? stylesheet_link_tag(path) : javascript_include_tag(path), block.binding)
+          concat( filetype==:css ? stylesheet_link_tag(output_filename) : javascript_include_tag(output_filename), block.binding)
         end
       }
       
