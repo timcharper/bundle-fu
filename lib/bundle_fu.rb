@@ -22,11 +22,32 @@ class BundleFu
       }
     end
     
-    def rewrite_relative_path(old_filename, new_filename)
+    # rewrites a relative path to an absolute path, removing excess "../" and "./"
+    # rewrite_relative_path("stylesheets/default/global.css", "../image.gif") => "/stylesheets/image.gif"
+    def rewrite_relative_path(source_filename, relative_url)
+      return relative_url if relative_url.first == "/"
       
+      elements = File.join("/", File.dirname(source_filename)).gsub(/\/+/, '/').split("/")
+      elements += relative_url.gsub(/\/+/, '/').split("/")
+      
+      index = 0
+      while(elements[index])
+        if (elements[index]==".") 
+          elements.delete_at(index) 
+        elsif (elements[index]=="..")
+          next if index==0
+          index-=1
+          2.times { elements.delete_at(index)}
+          
+        else
+          index+=1
+        end
+      end
+      
+      elements * "/"
     end
   
-    def bundle_css_files(filenames=[], output_filename = "", options = {})
+    def bundle_css_files(filenames=[], options = {})
       output = ""
       each_read_file(filenames) { |filename, content|
         # rewrite the URL reference paths
@@ -35,8 +56,8 @@ class BundleFu
         # url(/stylesheets/active_scaffold/../../images/active_scaffold/default/add.gif);
         # url(/stylesheets/../images/active_scaffold/default/add.gif);
         # url(/images/active_scaffold/default/add.gif);
-        
-        output << self.send("sanitized_#{options[:type]}", options)
+        content.gsub!(/url *\(([^\)]+)\)/) { "url(#{rewrite_relative_path(filename, $1)})" }
+        output << content
       }
       output
     end
