@@ -27,6 +27,12 @@ class BundleFuTest < Test::Unit::TestCase
     purge_cache
   end
   
+  def test__bundle_js_files__should_include_js_content
+    @mock_view.bundle { @@content_include_all }
+    
+    assert_public_files_match("/javascripts/cache/bundle.js", "function js_1()")
+  end
+  
   def test__content_remains_same__shouldnt_refresh_cache
     @mock_view.bundle { @@content_include_some }
     
@@ -107,6 +113,7 @@ class BundleFuTest < Test::Unit::TestCase
   end
   
   def test__nonexisting_file__should_use_blank_file_created_at_0_mtime
+#    dbg
     @mock_view.bundle { %q{<script src="/javascripts/non_existing_file.js?1000" type="text/javascript"></script>} } 
     
     assert_public_files_match(cache_files("bundle").grep(/javascripts/), "FILE READ ERROR")
