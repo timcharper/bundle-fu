@@ -10,16 +10,18 @@ class BundleFu
       filenames.each{ |filename|
         output  = "/* -------------- #{filename} ------------- */ "
         output << "\n"
-        output << (File.read(File.join(RAILS_ROOT, "public", filename)) rescue ( return "/* FILE READ ERROR! */"))
+        output << (File.read(File.join(RAILS_ROOT, "public", filename)) rescue ( "/* FILE READ ERROR! */"))
         output << "\n"
         yield filename, output
       }
     end
     
-    def bundle_js_files(filenames=[], output_filename = "", options={})
+    def bundle_js_files(filenames=[], options={})
       output = ""
       each_read_file(filenames) { |filename, content|
+        output << content
       }
+      output
     end
     
     # rewrites a relative path to an absolute path, removing excess "../" and "./"
@@ -124,7 +126,7 @@ class BundleFu
             FileUtils.rm_f(abs_path)
           else
             # call bundle_css_files or bundle_js_files to bundle all files listed.  output it's contents to a file
-            output = BundleFu.send("bundle_#{filetype}_files", new_filelist.filenames, output_filename)
+            output = BundleFu.send("bundle_#{filetype}_files", new_filelist.filenames)
             File.open( abs_path, "w") {|f| f.puts output } if output
           end
           new_filelist.save_as(abs_filelist_path)

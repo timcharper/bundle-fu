@@ -1,1 +1,1 @@
-js_3
+function js_2() { alert('hi');};
