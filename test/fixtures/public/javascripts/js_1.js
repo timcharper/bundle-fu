@@ -1,1 +1,1 @@
-js_1
+function js_1() { alert('hi')};
