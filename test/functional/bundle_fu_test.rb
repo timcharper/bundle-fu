@@ -134,7 +134,7 @@ class BundleFuTest < Test::Unit::TestCase
   end
   
   def test__bypass_param_set__should_honor_and_store_in_session
-    @mock_view.params[:bundle_bypass] = "true"
+    @mock_view.params[:bundle_fu] = "false"
     @mock_view.bundle { @@content_include_some }
     assert_equal(@@content_include_some, @mock_view.output)
     

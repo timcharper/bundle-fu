@@ -80,6 +80,9 @@ class BundleFu
         :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? true : $bundle_fu) : session[:bundle_fu] )
       }.merge(options)
       
+      # allow them to bypass via parameter
+      options[:bundle_fu] = false if options[:bypass]
+      
       paths = { :css => options[:css_path], :js => options[:js_path] }
       
       content = capture(&block)
@@ -96,9 +99,9 @@ class BundleFu
         content.scan(/(href|src) *= *["']([^"^'^\?]+)/i).each{ |property, value|
           case property
           when "src"
-            js_files[:js] << value
+            new_files[:js] << value
           when "href"
-            css_files[:css] << value
+            new_files[:css] << value
           end
         }
       end
@@ -120,9 +123,9 @@ class BundleFu
             # delete the javascript/css bundle file if it's empty, but keep the filelist cache
             FileUtils.rm_f(abs_path)
           else
-            BundleFu.send("bundle_#{filelist}_files", new_filelist.filenames, output_filename)
-#            output = BundleFu.bundle_files(new_filelist.filenames, :type => filetype) 
-#            File.open( abs_path, "w") {|f| f.puts output } if output
+            # call bundle_css_files or bundle_js_files to bundle all files listed.  output it's contents to a file
+            output = BundleFu.send("bundle_#{filetype}_files", new_filelist.filenames, output_filename)
+            File.open( abs_path, "w") {|f| f.puts output } if output
           end
           new_filelist.save_as(abs_filelist_path)
         end
