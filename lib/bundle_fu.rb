@@ -27,6 +27,7 @@ class BundleFu
     # rewrites a relative path to an absolute path, removing excess "../" and "./"
     # rewrite_relative_path("stylesheets/default/global.css", "../image.gif") => "/stylesheets/image.gif"
     def rewrite_relative_path(source_filename, relative_url)
+      relative_url = relative_url.strip
       return relative_url if relative_url.first == "/"
       
       elements = File.join("/", File.dirname(source_filename)).gsub(/\/+/, '/').split("/")
