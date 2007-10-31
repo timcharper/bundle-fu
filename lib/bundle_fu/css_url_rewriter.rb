@@ -35,6 +35,7 @@ class BundleFu::CSSUrlRewriter
     # url('/images/active_scaffold/default/add.gif');
     def rewrite_urls(filename, content)
       content.gsub!(/url *\(([^\)]+)\)/) { "url(#{rewrite_relative_path(filename, $1)})" }
+      content
     end
     
   end
