@@ -24,12 +24,11 @@ class BundleFu
     end
     
     def bundle_js_files(filenames=[], options={})
-      output = ""
+      output = 
       bundle_files(filenames) { |filename, content|
         if options[:compress]
           if Object.const_defined?("Packr")
-            # use Packr plugin (http://blog.jcoglan.com/packr/)
-            Packr.new.pack(content, options[:packr_options] || {:shrink_vars => false, :base62 => true})
+            content
           else
             JSMinimizer.minimize_content(content)
           end
@@ -37,6 +36,14 @@ class BundleFu
           content
         end
       }
+      
+      if Object.const_defined?("Packr")
+        # use Packr plugin (http://blog.jcoglan.com/packr/)
+        Packr.new.pack(output, options[:packr_options] || {:shrink_vars => false, :base62 => false})
+      else
+        output
+      end
+      
     end
 
     def bundle_css_files(filenames=[], options = {})
