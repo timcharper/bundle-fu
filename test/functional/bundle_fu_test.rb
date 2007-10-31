@@ -5,19 +5,6 @@ require "test/unit"
 # require "library_file_name"
 
 class BundleFuTest < Test::Unit::TestCase
-  @@content_include_some = <<-EOF
-  <script src="/javascripts/js_1.js?1000" type="text/javascript"></script>
-  <script src="/javascripts/js_2.js?1000" type="text/javascript"></script>
-  <link href="/stylesheets/css_1.css?1000" media="screen" rel="Stylesheet" type="text/css" />
-  <link href="/stylesheets/css_2.css?1000" media="screen" rel="Stylesheet" type="text/css" />
-  EOF
-  
-  # the same content, slightly changed
-  @@content_include_all = @@content_include_some + <<-EOF
-  <script src="/javascripts/js_3.js?1000" type="text/javascript"></script>
-  <link href="/stylesheets/css_3.css?1000" media="screen" rel="Stylesheet" type="text/css" />
-  EOF
-  
   def setup
     @mock_view = MockView.new
     BundleFu.init # resets BundleFu
@@ -31,6 +18,23 @@ class BundleFuTest < Test::Unit::TestCase
     @mock_view.bundle { @@content_include_all }
     
     assert_public_files_match("/javascripts/cache/bundle.js", "function js_1()")
+  end
+  
+  def test__bundle_js_files__should_default_to_not_compressed_and_include_override_option
+    @mock_view.bundle() { @@content_include_all }
+    default_content = File.read(public_file("/javascripts/cache/bundle.js"))
+    purge_cache
+    
+    @mock_view.bundle(:compress => false) { @@content_include_all }
+    uncompressed_content = File.read(public_file("/javascripts/cache/bundle.js"))
+    purge_cache
+    
+    @mock_view.bundle(:compress => true) { @@content_include_all }
+    compressed_content = File.read(public_file("/javascripts/cache/bundle.js"))
+    purge_cache
+    
+    assert default_content.length == uncompressed_content.length, "Should default to uncompressed"
+    assert uncompressed_content.length > compressed_content.length, "Didn't compress the content. (:compress => true) #{compressed_content.length}.  (:compress => false) #{uncompressed_content.length}"
   end
   
   def test__content_remains_same__shouldnt_refresh_cache
@@ -151,9 +155,6 @@ class BundleFuTest < Test::Unit::TestCase
   end
   
 private
-  def public_file(filename)
-    File.join(::RAILS_ROOT, "public", filename)
-  end
   
   def purge_cache
     # remove all fixtures named "bundle*"

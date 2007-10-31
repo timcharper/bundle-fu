@@ -6,63 +6,38 @@ class BundleFu
       @content_store = {}
     end
     
-    def each_read_file(filenames=[])
+    def bundle_files(filenames=[])
+      output = ""
       filenames.each{ |filename|
-        output  = "/* -------------- #{filename} ------------- */ "
+        output << "/* --------- #{filename} --------- */ "
         output << "\n"
-        output << (File.read(File.join(RAILS_ROOT, "public", filename)) rescue ( "/* FILE READ ERROR! */"))
-        output << "\n"
-        yield filename, output
+        begin
+          content = (File.read(File.join(RAILS_ROOT, "public", filename)))
+        rescue 
+          output << "/* FILE READ ERROR! */"
+          next
+        end
+        
+        output << (yield(filename, content)||"")
       }
+      output
     end
     
     def bundle_js_files(filenames=[], options={})
       output = ""
-      each_read_file(filenames) { |filename, content|
-        output << content
-      }
-      output
-    end
-    
-    # rewrites a relative path to an absolute path, removing excess "../" and "./"
-    # rewrite_relative_path("stylesheets/default/global.css", "../image.gif") => "/stylesheets/image.gif"
-    def rewrite_relative_path(source_filename, relative_url)
-      relative_url = relative_url.strip
-      return relative_url if relative_url.first == "/"
-      
-      elements = File.join("/", File.dirname(source_filename)).gsub(/\/+/, '/').split("/")
-      elements += relative_url.gsub(/\/+/, '/').split("/")
-      
-      index = 0
-      while(elements[index])
-        if (elements[index]==".") 
-          elements.delete_at(index) 
-        elsif (elements[index]=="..")
-          next if index==0
-          index-=1
-          2.times { elements.delete_at(index)}
-          
+      bundle_files(filenames) { |filename, content|
+        if options[:compress]
+          JSMinimizer.minimize_content(content)
         else
-          index+=1
+          content
         end
-      end
-      
-      elements * "/"
-    end
-  
-    def bundle_css_files(filenames=[], options = {})
-      output = ""
-      each_read_file(filenames) { |filename, content|
-        # rewrite the URL reference paths
-        # url(../../../images/active_scaffold/default/add.gif);
-        # url(/stylesheets/active_scaffold/default/../../../images/active_scaffold/default/add.gif);
-        # url(/stylesheets/active_scaffold/../../images/active_scaffold/default/add.gif);
-        # url(/stylesheets/../images/active_scaffold/default/add.gif);
-        # url(/images/active_scaffold/default/add.gif);
-        content.gsub!(/url *\(([^\)]+)\)/) { "url(#{rewrite_relative_path(filename, $1)})" }
-        output << content
       }
-      output
+    end
+
+    def bundle_css_files(filenames=[], options = {})
+      bundle_files(filenames) { |filename, content|
+          BundleFu::CSSUrlRewriter.rewrite_urls(filename, content)
+      }
     end
   end
   
@@ -80,6 +55,7 @@ class BundleFu
         :css_path => ($bundle_css_path || "/stylesheets/cache"),
         :js_path => ($bundle_js_path || "/javascripts/cache"),
         :name => ($bundle_default_name || "bundle"),
+        :compress => false,
         :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? true : $bundle_fu) : session[:bundle_fu] )
       }.merge(options)
       
@@ -127,7 +103,7 @@ class BundleFu
             FileUtils.rm_f(abs_path)
           else
             # call bundle_css_files or bundle_js_files to bundle all files listed.  output it's contents to a file
-            output = BundleFu.send("bundle_#{filetype}_files", new_filelist.filenames)
+            output = BundleFu.send("bundle_#{filetype}_files", new_filelist.filenames, options)
             File.open( abs_path, "w") {|f| f.puts output } if output
           end
           new_filelist.save_as(abs_filelist_path)
