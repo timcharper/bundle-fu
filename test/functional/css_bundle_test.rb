@@ -19,4 +19,10 @@ class CSSBundleTest < Test::Unit::TestCase
     assert_match("background-image: url(/images/background.gif)", bundled_css)
     assert_match("background-image: url(/images/groovy/background_2.gif)", bundled_css)
   end
+  
+  def test__bundle_css_files__no_images__should_return_content
+    bundled_css = BundleFu.bundle_css_files(["/stylesheets/css_1.css"])
+    assert_match("css_1 { }", bundled_css)
+    
+  end
 end
