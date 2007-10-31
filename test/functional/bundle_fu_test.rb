@@ -33,7 +33,7 @@ class BundleFuTest < Test::Unit::TestCase
     compressed_content = File.read(public_file("/javascripts/cache/bundle.js"))
     purge_cache
     
-    assert default_content.length == uncompressed_content.length, "Should default to uncompressed"
+    assert default_content.length == compressed_content.length, "Should default to compressed"
     assert uncompressed_content.length > compressed_content.length, "Didn't compress the content. (:compress => true) #{compressed_content.length}.  (:compress => false) #{uncompressed_content.length}"
   end
   
