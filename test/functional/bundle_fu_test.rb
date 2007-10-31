@@ -20,6 +20,31 @@ class BundleFuTest < Test::Unit::TestCase
     assert_public_files_match("/javascripts/cache/bundle.js", "function js_1()")
   end
   
+  def test__bundle_js_files__should_use_packr
+    Object.send :class_eval, <<EOF
+    class ::Object::Packr
+      def initialize
+      end
+      
+      def pack(content, options={})
+        "PACKR!" + options.inspect
+      end
+      
+    end
+EOF
+    
+    @mock_view.bundle() { @@content_include_all }
+    assert_public_files_match("/javascripts/cache/bundle.js", "PACKR")
+    purge_cache
+    
+    @mock_view.bundle(:packr_options => {:packr_options_here => "hi_packr"}) { @@content_include_all }
+    assert_public_files_match("/javascripts/cache/bundle.js", "packr_options_here", "Should include packr_options")
+    
+    
+    Object.send :remove_const, "Packr"
+    
+  end
+  
   def test__bundle_js_files__should_default_to_not_compressed_and_include_override_option
     @mock_view.bundle() { @@content_include_all }
     default_content = File.read(public_file("/javascripts/cache/bundle.js"))
