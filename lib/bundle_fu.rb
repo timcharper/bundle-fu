@@ -55,7 +55,7 @@ class BundleFu
         :css_path => ($bundle_css_path || "/stylesheets/cache"),
         :js_path => ($bundle_js_path || "/javascripts/cache"),
         :name => ($bundle_default_name || "bundle"),
-        :compress => false,
+        :compress => true,
         :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? true : $bundle_fu) : session[:bundle_fu] )
       }.merge(options)
       
