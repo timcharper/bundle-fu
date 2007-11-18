@@ -1,6 +1,10 @@
 require File.join(File.dirname(__FILE__), '../test_helper.rb')
 
 class CSSBundleTest < Test::Unit::TestCase
+  def setup
+    @bundle_fu = BundleFu.new({})
+  end
+  
   def test__rewrite_relative_path__should_rewrite
     assert_rewrites("/stylesheets/active_scaffold/default/stylesheet.css", 
       "../../../images/spinner.gif" => "/images/spinner.gif",
@@ -36,13 +40,13 @@ class CSSBundleTest < Test::Unit::TestCase
   end
   
   def test__bundle_css_file__should_rewrite_relatiave_path
-    bundled_css = BundleFu.bundle_css_files(["/stylesheets/css_3.css"])
+    bundled_css = @bundle_fu.bundle_css_files(["/stylesheets/css_3.css"])
     assert_match("background-image: url(/images/background.gif)", bundled_css)
     assert_match("background-image: url(/images/groovy/background_2.gif)", bundled_css)
   end
   
   def test__bundle_css_files__no_images__should_return_content
-    bundled_css = BundleFu.bundle_css_files(["/stylesheets/css_1.css"])
+    bundled_css = @bundle_fu.bundle_css_files(["/stylesheets/css_1.css"])
     assert_match("css_1 { }", bundled_css)
   end
   
