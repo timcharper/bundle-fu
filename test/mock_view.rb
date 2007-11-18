@@ -1,6 +1,7 @@
 class MockView
   # set RAILS_ROOT to fixtures dir so we use those files
   include BundleFu::InstanceMethods
+  include ActionView::Helpers::AssetTagHelper
   ::RAILS_ROOT = File.join(File.dirname(__FILE__), 'fixtures')
   
   attr_accessor :output
@@ -20,12 +21,7 @@ class MockView
     @output << output
   end
   
-  def stylesheet_link_tag(*args)
-    args.collect{|arg| "<link href=\"#{arg}?#{File.mtime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" media=\"screen\" rel=\"Stylesheet\" type=\"text/css\" />" } * "\n"
+  def bundle(options={}, &block)
+    @output << (super(options, &block) || "")
   end
-  
-  def javascript_include_tag(*args)
-    args.collect{|arg| "<script src=\"#{arg}?#{File.mtime(File.join(RAILS_ROOT, 'public', arg)).to_i}\" type=\"text/javascript\"></script>" } * "\n"
-  end
-  
 end

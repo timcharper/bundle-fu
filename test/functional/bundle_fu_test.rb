@@ -1,13 +1,10 @@
 require File.join(File.dirname(__FILE__), '../test_helper.rb')
 
-require "test/unit"
-
-# require "library_file_name"
-
 class BundleFuTest < Test::Unit::TestCase
   def setup
     @mock_view = MockView.new
-    BundleFu.init # resets BundleFu
+    
+    BundleFu.reset!
   end
   
   def teardown
@@ -142,7 +139,6 @@ EOF
   end
   
   def test__nonexisting_file__should_use_blank_file_created_at_0_mtime
-#    dbg
     @mock_view.bundle { %q{<script src="/javascripts/non_existing_file.js?1000" type="text/javascript"></script>} } 
     
     assert_public_files_match(cache_files("bundle").grep(/javascripts/), "FILE READ ERROR")
@@ -161,10 +157,10 @@ EOF
     assert_public_files_no_match(cache_files("bundle"), "BOGUS", "Should have regenerated the file, but it didn't")
   end
   
-  def test__bypass__should_generate_files_but_render_normal_output
+  def test__bypass__should_not_generate_files_but_render_normal_output
     @mock_view.bundle(:bypass => true) { @@content_include_some }
-    assert_public_file_exists("/stylesheets/cache/bundle.css")
-    assert_public_file_exists("/stylesheets/cache/bundle.css.filelist")
+    assert_public_file_not_exists("/stylesheets/cache/bundle.css")
+    assert_public_file_not_exists("/stylesheets/cache/bundle.css.filelist")
     
     assert_equal(@@content_include_some, @mock_view.output)
   end
@@ -174,7 +170,7 @@ EOF
     @mock_view.bundle { @@content_include_some }
     assert_equal(@@content_include_some, @mock_view.output)
     
-    @mock_view.params.delete(:bundle_bypass)
+    @mock_view.params.delete(:bundle_fu)
     @mock_view.bundle { @@content_include_some }
     assert_equal(@@content_include_some*2, @mock_view.output)
   end
@@ -190,8 +186,16 @@ private
     assert_file_exists(public_file(filename), message)
   end
   
+  def assert_public_file_not_exists(filename, message=nil)
+    assert_file_not_exists(public_file(filename), message)
+  end
+  
   def assert_file_exists(filename, message=nil)
     assert(File.exists?(filename), message || "File #{filename} expected to exist, but didnt.")
+  end
+  
+  def assert_file_not_exists(filename, message=nil)
+    assert(!File.exists?(filename), message || "File #{filename} expected to not exist, but did.")
   end
   
   def assert_public_files_match(filenames, needle, message=nil)

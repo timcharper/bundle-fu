@@ -1,8 +1,8 @@
 require 'test/unit'
 require "rubygems"
 require 'active_support'
-
-for file in ["../environment.rb", "mock_view.rb"]
+require 'erb'
+for file in ["asset_tag_helper", "../environment.rb", "mock_view.rb"]
   require File.expand_path(File.join(File.dirname(__FILE__), file))
 end
 
