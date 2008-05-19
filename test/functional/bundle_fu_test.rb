@@ -20,6 +20,11 @@ class BundleFuTest < Test::Unit::TestCase
     assert_public_files_match("/javascripts/cache/bundle.js", "function js_1()")
   end
   
+  def test__bundle_js_files_with_asset_server_url
+    @mock_view.bundle { %(<script src="https://assets.server.com/javascripts/js_1.js?1000" type="text/javascript"></script>) }
+    assert_public_files_match("/javascripts/cache/bundle.js", "function js_1()")
+  end
+  
   def test__bundle_js_files__should_use_packr
     Object.send :class_eval, <<EOF
     class ::Object::Packr
