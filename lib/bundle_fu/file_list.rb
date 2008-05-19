@@ -46,8 +46,12 @@ class BundleFu::FileList
   
   def add_files(filenames=[])
     filenames.each{|filename|
-      self.filelist << [ filename, (File.mtime(abs_location(filename)).to_i rescue 0) ]
+      self.filelist << [ extract_filename_from_url(filename), (File.mtime(abs_location(filename)).to_i rescue 0) ]
     }
+  end
+  
+  def extract_filename_from_url(url)
+    url.gsub(/^https?:\/\/[^\/]+/i, '')
   end
   
   def save_as(filename)
