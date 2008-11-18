@@ -122,12 +122,24 @@ class BundleFu
         end
         
         if File.exists?(abs_path) && options[:bundle_fu]
-          concat( filetype==:css ? stylesheet_link_tag(output_filename) : javascript_include_tag(output_filename), block.binding)
+          tag = filetype==:css ? stylesheet_link_tag(output_filename) : javascript_include_tag(output_filename)
+          if Rails::version < "2.2.0"
+            concat( tag , block.binding)
+          else
+            #concat doesn't need block.binding in Rails >= 2.2.0
+            concat( tag )
+          end
+            
         end
       }
       
       unless options[:bundle_fu]
-        concat( content, block.binding )
+        if Rails::version < "2.2.0"
+          concat( content, block.binding )
+        else
+          #concat doesn't need block.binding in Rails >= 2.2.0
+          concat( content )
+        end
       end
     end
   end
