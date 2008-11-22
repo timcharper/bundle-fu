@@ -68,6 +68,7 @@ class BundleFu
         :js_path => ($bundle_js_path || "/javascripts/cache"),
         :name => ($bundle_default_name || "bundle"),
         :compress => true,
+        :prefix => nil,
         :bundle_fu => ( session[:bundle_fu].nil? ? ($bundle_fu.nil? ? true : $bundle_fu) : session[:bundle_fu] )
       }.merge(options)
       
@@ -103,6 +104,7 @@ class BundleFu
         abs_filelist_path = abs_filelist_paths[filetype]
        
         filelist = FileList.open( abs_filelist_path )
+        filelist = remove_prefix(filelist, options[:prefix])
         
         # check against newly parsed filelist.  If we didn't parse the filelist from the output, then check against the updated mtimes.
         new_filelist = new_files ? BundleFu::FileList.new(new_files[filetype]) : filelist.clone.update_mtimes
@@ -129,6 +131,23 @@ class BundleFu
       unless options[:bundle_fu]
         concat( content, block.binding )
       end
+    end
+
+    def remove_prefix(filelist, prefix)
+      if prefix and filelist
+        new_file_list = []
+        filelist.filelist.each do |file_set|
+
+          prefix = prefix + '/' unless prefix[(prefix.size - 1)..prefix.size] == '/'
+
+          if file_set[0] =~ Regexp.new("^#{prefix}",true)
+            new_file_list << [file_set[0].gsub(prefix[0..(prefix.size - 2)],''),file_set[1]]
+          end
+        end
+        filelist.filelist = new_file_list
+      end
+
+      filelist
     end
   end
 end
