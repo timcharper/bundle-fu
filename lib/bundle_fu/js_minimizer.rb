@@ -47,7 +47,7 @@ class BundleFu::JSMinimizer
      return false if !c || c == EOF
      return ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
              (c >= 'A' && c <= 'Z') || c == '_' || c == '$' ||
-             c == '\\' || c[0] > 126)
+             c == '\\' || c[0..0] > '~')
   end
   
   # get -- return the next character from input. Watch out for lookahead. If
