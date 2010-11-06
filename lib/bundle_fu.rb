@@ -29,6 +29,8 @@ class BundleFu
         if options[:compress]
           if Object.const_defined?("Packr")
             content
+          elsif Object.const_defined?("YUI")
+            content
           else
             JSMinimizer.minimize_content(content)
           end
@@ -40,6 +42,9 @@ class BundleFu
       if Object.const_defined?("Packr")
         # use Packr plugin (http://blog.jcoglan.com/packr/)
         Packr.new.pack(output, options[:packr_options] || {:shrink_vars => false, :base62 => false})
+      elsif Object.const_defined?("YUI")
+        compressor = YUI::JavaScriptCompressor.new(options[:yui_js_options] || {:munge => true})
+        compressor.compress(output)
       else
         output
       end
@@ -48,7 +53,13 @@ class BundleFu
 
     def bundle_css_files(filenames=[], options = {})
       bundle_files(filenames) { |filename, content|
-          BundleFu::CSSUrlRewriter.rewrite_urls(filename, content)
+        content = BundleFu::CSSUrlRewriter.rewrite_urls(filename, content)
+        # use YUI compressor
+        if Object.const_defined?("YUI")
+          compressor = YUI::CssCompressor.new(options[:yui_css_options] || {})
+          content = compressor.compress(content)
+        end
+        content
       }
     end
   end
