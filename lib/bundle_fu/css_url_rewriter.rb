@@ -5,7 +5,7 @@ class BundleFu::CSSUrlRewriter
     def rewrite_relative_path(source_filename, relative_url)
       relative_url = relative_url.to_s.strip.gsub(/["']/, "")
       
-      return relative_url if relative_url.first == "/" || relative_url.include?("://")
+      return relative_url if relative_url.first == "/" || relative_url.include?("://") || relative_url.include?("data:image")
       
       elements = File.join("/", File.dirname(source_filename)).gsub(/\/+/, '/').split("/")
       elements += relative_url.gsub(/\/+/, '/').split("/")
